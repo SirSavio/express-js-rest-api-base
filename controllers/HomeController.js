@@ -4,9 +4,8 @@ class HomeController {
         res.send("APP EXPRESS! - Guia do programador");
     }
 
-    async teste(request, response) {
-        
-
+    async validate(request, response) {
+        response.send({success: true, message: 'Token válido!'})
     }
 
 }

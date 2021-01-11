@@ -1,4 +1,5 @@
 const knex = require('../database/connection');
+const PasswordToken = require('./PasswordToken');
 
 class User{
     async create(user){
@@ -32,28 +33,24 @@ class User{
     async findOne(id){
         try {
             let user =  await knex.select(['id', 'name', 'email', 'role']).where({id}).table('users');
-            return user.length ? user : undefined
+            return user.length ? user[0] : undefined
         } catch (error){
             console.log(error);
             return undefined;
         }
     }
 
-    async update(id, email, name, role){
-        const user = this.findOne(id)
-        let data = {}
+    async findByEmail(email){
+        try {
+            let user =  await knex.select(['id', 'name', 'email', 'password', 'role']).where({email}).table('users');
+            return user.length ? user[0] : undefined
+        } catch (error){
+            console.log(error);
+            return undefined;
+        }
+    }
 
-        if(user){
-            if(email && email != user.email){
-                let existsEmail = await this.findEmail(email)
-                if(!existsEmail) data.email = email
-                else return {success: false, message: 'Email já cadastrado!'}
-            }
-        }else return {success: false, message: 'Usuário não existe!'}
-
-        if(name) data.name = name
-        if(role) data.role = role
-
+    async update(data, id){
         try {
             await knex.update(data).where({id}).table('users')
             return {success: true, message: 'Usuário atualizado!'}
@@ -61,9 +58,29 @@ class User{
             console.log(error)
             return {success: false, message: error.message}
         }
-        
-        
     }
+
+    async destroy(id){
+        try {
+            await knex.delete().where({id}).table('users')
+            return {success: true, message: 'Deleção sucesso!'}
+        } catch (error) {
+            return {success: false, message: 'Deleção falhou!'}
+        }
+    }
+
+    async changePassword(newPassword, id, token){
+        try {
+            await knex.update({password: newPassword}).where({id}).table('users')
+            await PasswordToken.setUsed(token)
+            return {success: true, message: 'Senha alterada!'}
+        } catch (error) {
+            console.log(error)
+            return {success: false, message: error.message}
+        }
+    }
+
+
 }
 
 module.exports = new User()
